@@ -1,0 +1,13 @@
+accountNumber,bank,balance,status
+ACC-001,First National,125000,ACTIVE
+ACC-002,First National,5200,ACTIVE
+ACC-003,Metro Bank,3400,ACTIVE
+ACC-004,Metro Bank,8900,ACTIVE
+ACC-005,City Credit,2100,ACTIVE
+ACC-006,City Credit,4500,ACTIVE
+ACC-007,Trust Bank,1800,ACTIVE
+ACC-008,Trust Bank,97000,ACTIVE
+ACC-009,SafeGuard,156000,ACTIVE
+ACC-010,First National,7200,ACTIVE
+ACC-011,Metro Bank,3900,ACTIVE
+ACC-012,City Credit,5100,ACTIVE

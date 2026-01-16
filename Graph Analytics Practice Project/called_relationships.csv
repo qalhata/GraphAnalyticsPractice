@@ -1,0 +1,27 @@
+caller_name,recipient_name,timestamp,duration
+John Doe,Tommy Barnes,2024-06-15T14:23:00,245
+John Doe,Sarah Kim,2024-06-15T16:45:00,182
+John Doe,Sarah Kim,2024-06-18T09:12:00,421
+John Doe,Sarah Kim,2024-06-20T11:30:00,156
+John Doe,Sarah Kim,2024-06-25T15:22:00,334
+John Doe,Sarah Kim,2024-07-02T10:18:00,289
+John Doe,Sarah Kim,2024-07-08T14:55:00,412
+John Doe,Sarah Kim,2024-07-15T09:33:00,198
+John Doe,Sarah Kim,2024-07-22T16:41:00,367
+John Doe,Sarah Kim,2024-08-01T11:22:00,221
+John Doe,Sarah Kim,2024-08-10T13:45:00,455
+John Doe,Sarah Kim,2024-08-20T10:15:00,312
+Tommy Barnes,Lisa Johnson,2024-07-05T13:20:00,167
+Tommy Barnes,Lisa Johnson,2024-07-12T15:33:00,234
+Tommy Barnes,Lisa Johnson,2024-07-19T09:45:00,189
+Tommy Barnes,Lisa Johnson,2024-07-26T11:28:00,298
+Tommy Barnes,Lisa Johnson,2024-08-02T14:12:00,221
+Tommy Barnes,Lisa Johnson,2024-08-09T16:38:00,345
+Tommy Barnes,Lisa Johnson,2024-08-16T10:55:00,178
+Tommy Barnes,Lisa Johnson,2024-08-23T13:22:00,267
+Tommy Barnes,Lisa Johnson,2024-09-01T15:47:00,412
+Tommy Barnes,Lisa Johnson,2024-09-08T09:18:00,156
+Tommy Barnes,Lisa Johnson,2024-09-15T11:34:00,289
+Sarah Kim,Carlos Mendez,2024-08-05T14:20:00,512
+Sarah Kim,Carlos Mendez,2024-08-12T10:45:00,389
+Sarah Kim,Carlos Mendez,2024-08-19T16:22:00,467

@@ -1,0 +1,16 @@
+id,name,status,dateOfBirth,lastKnownAddress,phone,role
+CR-12345,John Doe,KNOWN_OFFENDER,1975-03-15,123 Shady Lane Brooklyn NY,+1-555-0101,Boss
+CR-67890,Carlos Mendez,KNOWN_OFFENDER,1978-07-22,456 Dark Street Queens NY,+1-555-0102,Boss
+CR-11223,Maria Vasquez,PERSON_OF_INTEREST,1982-11-08,789 Suspect Ave Bronx NY,+1-555-0103,Lieutenant
+AS-33445,Tommy Barnes,ASSOCIATE,1985-02-14,321 Loyal Street Manhattan NY,+1-555-0104,Lieutenant
+AS-55667,Sarah Kim,ASSOCIATE,1990-06-30,654 Trust Road Brooklyn NY,+1-555-0105,Cell Leader
+AS-77889,David Wong,ASSOCIATE,1988-09-12,987 Connection Blvd Queens NY,+1-555-0106,Cell Leader
+AS-99001,Lisa Johnson,CLEAN,1992-01-25,147 Normal Street Manhattan NY,+1-555-0107,Operative
+AS-11223,Mike Roberts,CLEAN,1987-04-18,258 Innocent Lane Bronx NY,+1-555-0108,Operative
+AS-33445,Anna Petrov,CLEAN,1991-12-05,369 Clean Ave Brooklyn NY,+1-555-0109,Street Level
+ML-55667,James Chen,MONEY_MULE,1993-08-20,741 Mule Street Queens NY,+1-555-0110,Money Mule
+BF-77889,Rachel Patterson,BENEFICIARY,1986-03-11,852 Clean Money Rd Manhattan NY,+1-555-0111,Beneficiary
+BF-99001,Kevin Garcia,BENEFICIARY,1989-10-28,963 Laundered Blvd Bronx NY,+1-555-0112,Beneficiary
+AS-12321,Elena Popov,ASSOCIATE,,,+1-555-0113,Operative
+AS-45654,Robert Clark,CLEAN,,,+1-555-0114,Street Level
+AS-78987,Nina Davis,CLEAN,,,+1-555-0115,Street Level
