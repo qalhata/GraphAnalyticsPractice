@@ -623,7 +623,71 @@ One comparison worth sitting with. The money laundering query found a pattern in
 
 **Legality, capability and appropriateness are three separate tests.** Every technique in this lab is neutral. None of the decisions about how to use them are.
 
-Finally, run block **7** to drop the projections and tidy up.
+---
+
+# Part 6: Cleaning up, and why it matters (5 minutes)
+
+Run blocks **7.1**, **7.2** and **7.3**.
+
+**What 7.1 removes: the in-memory projections, and nothing else.** Your nodes, your relationships, your saved queries and every score written in block 4.5 all stay exactly where they are. Block 7.3 proves it.
+
+**Why this is a habit worth having rather than housekeeping.**
+
+- **A projection lives in memory, not on disk**, and holds that memory until you drop it or restart the instance. On a laptop, a few projections of a real graph will exhaust the heap, and the next algorithm fails with an out-of-memory error rather than anything helpful.
+- **The correctness argument matters more.** A projection is a snapshot taken at the moment you created it. Change your data, run an algorithm against the old projection, and you get answers computed on the graph as it used to be, **with no warning at all.** Dropping forces a rebuild against current data. Treat a projection as disposable working state, like a temp table you drop at the end of a job.
+- **And it avoids name collisions**, which is why every `a` block in this lab drops before projecting.
+
+> **What you should see** from 7.2: no rows, so nothing is projected.
+>
+> From 7.3: **15 people with scores, highest betweenness 18.8.** Unchanged.
+
+**That result is the whole argument for `.write` over `.stream` in block 4.5.** Streamed results exist only in the frame that produced them and vanish when you navigate away. **Written properties are part of the graph**, so anything can read them afterwards: another query, a different tool, a colleague, a dashboard. Which is what you are about to do.
+
+---
+
+# Part 7: Make it visual (15 minutes)
+
+Cypher tables are how you interrogate a graph. They are not how you hand a finding to somebody else. Neo4j Desktop has a Dashboards tool, and **it reads the properties you just wrote**, so it needs no projection and works perfectly well after the cleanup.
+
+## Build the dashboard
+
+1. In the left sidebar under **Studio**, click **Dashboards**, then **Create**.
+2. Name it, then click **Add a card**.
+3. Paste a query into the **Query** tab.
+4. Choose the visualisation from the **dropdown at the top right** of the card editor. The options are Bar chart, Graph, Line chart, Map, Pie chart, Single value, Table and Text.
+5. Click **Preview**, then **Save**.
+6. Repeat. Cards can be dragged and resized on the canvas.
+
+## The cards, and why each one
+
+| Block | Card type | What it shows |
+|---|---|---|
+| **8.1** | Single value | People in the network |
+| **8.2** | Single value | Total moved through the accounts |
+| **8.3** | Bar chart | **Brokerage ranking. The headline of the lab** |
+| **8.4** | Pie chart | Status mix |
+| **8.5** | Bar chart | Community sizes |
+| **8.6** | Table | Every metric in one place |
+| **8.7** | Graph | The social network |
+| **8.8** | Graph | **The laundering chains** |
+
+**8.3 is the one to put at the top left.** A sorted bar chart of betweenness puts the entire finding of the session into one picture: the tallest bars belong to associates and the two bosses are short. Nobody has to read a table to see it.
+
+**8.8 is the one people will remember.** Three chains fanning out from one account through four hops into different beneficiaries. It is the same query from block 3.6, and as a picture it needs no explanation.
+
+> **Do 8.4 twice, and this is a deliberate exercise.** Build it as a **pie chart** first, then build the identical query again as a **bar chart**. Look at both. Six categories, with two of them at two people and two at one. On the pie those four slices are nearly indistinguishable and you end up reading the labels rather than the picture. On the sorted bar you can read the ranking at a glance.
+>
+> **Most people will ask you for the pie.** Knowing exactly why the bar is easier to read, and being able to show it side by side, is worth more than the technique.
+
+## Two other visual things worth knowing
+
+**Put the scores on the nodes in the Query view.** Run block 8.7 in the Query tab, click the **`Person` chip** in the Results overview panel on the right, and set **Caption** to `betweenness`. Every node now displays its own score. Note that **Size in that panel applies one fixed size to the whole label**, so you cannot size individual nodes by a property there. Property-driven sizing lives in **Bloom**, which is also in the left sidebar.
+
+**That limitation pushes you towards the better visual anyway.** Sizing asks the eye to compare areas, which people judge poorly. A number printed on the node uses text and position, which people read accurately. Same reasoning as the pie chart above.
+
+---
+
+Once you are done, you can drop the projections again with block **7.1** if you built any more.
 
 ---
 
