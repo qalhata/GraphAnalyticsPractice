@@ -3,6 +3,11 @@
 //  Run these blocks in order in Neo4j Browser / Query.
 //  Each block is separated by a blank line and ends with a semicolon.
 //
+//  RUN ONE BLOCK AT A TIME. If you paste two statements into a single editor
+//  cell, Desktop shows a short summary for each instead of the result table,
+//  so you will see "No changes" where you expected numbers. The query still
+//  ran; you just cannot see what it returned.
+//
 //  ROUTE A - LOAD FROM THE REPOSITORY (default, nothing to change)
 //  The URLs below are live and ready to run. Copy and paste as-is.
 //  Base URL: https://raw.githubusercontent.com/qalhata/GraphAnalyticsPractice/main/
@@ -239,11 +244,14 @@ RETURN p;
 // 4.1 Confirm the plugin. Expect 2.x or higher.
 RETURN gds.version() AS GDSVersion;
 
-// 4.2 Project the social network. Person nodes only, three relationship
-//     types, all undirected. Expect 15 nodes and 92 relationships
-//     (46 edges counted in both directions).
+// 4.2a Drop any existing 'people' projection. On a first run this returns
+//      no rows, which is correct: 'false' means do not error if it is absent.
+//      RUN THIS ON ITS OWN, not pasted together with 4.2b.
 CALL gds.graph.drop('people', false);
 
+// 4.2b Project the social network. Person nodes only, three relationship
+//      types, all undirected. Expect graphName 'people', 15 nodes and
+//      92 relationships (46 edges counted in both directions).
 CALL gds.graph.project(
   'people',
   'Person',
@@ -256,9 +264,11 @@ CALL gds.graph.project(
 YIELD graphName, nodeCount, relationshipCount
 RETURN graphName, nodeCount, relationshipCount;
 
-// 4.3 Project the money network separately. Different question, different graph.
+// 4.3a Drop any existing 'money' projection. Run on its own.
 CALL gds.graph.drop('money', false);
 
+// 4.3b Project the money network separately. Different question, different
+//      graph. Expect graphName 'money' with Persons and Accounts included.
 CALL gds.graph.project(
   'money',
   ['Person', 'Account'],
@@ -376,9 +386,10 @@ MATCH (p:Person)
 WHERE p.name <> 'Sarah Kim'
 SET p:Remaining;
 
-// 5.2 Project the reduced network.
+// 5.2a Drop any existing 'disrupted' projection. Run on its own.
 CALL gds.graph.drop('disrupted', false);
 
+// 5.2b Project the reduced network.
 CALL gds.graph.project(
   'disrupted',
   'Remaining',

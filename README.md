@@ -121,6 +121,12 @@ So `'https://raw.../persons.csv'` becomes `'file:///persons.csv'`.
 
 Paste one block at a time and press the play button or **Ctrl+Enter**. Blocks are separated by blank lines in `lab-queries.cypher` and each ends with a semicolon.
 
+> **One block per cell, and this matters more than it sounds.** If you paste two
+> statements into the same editor cell, Desktop shows a short summary for each rather
+> than the result table, so you get "No changes" where you expected numbers. The query
+> did run. You simply cannot see what it returned, which is confusing at exactly the
+> moment you are trying to verify something.
+
 > **Tip worth adopting now.** Neo4j's query editor lets you save queries into folders. Make four: **Load**, **Verify**, **Cypher**, **Analytics**. You will want them again, and it is the habit that turns a lab into something reusable.
 
 ---
@@ -415,7 +421,9 @@ If it said `NodeByLabelScan` it would be reading all fifteen Person nodes to fin
 
 ## 3.1: Projections
 
-Run blocks **4.1** through **4.4**.
+Run blocks **4.1**, **4.2a**, **4.2b**, **4.3a**, **4.3b** and **4.4**, each on its own.
+
+The `a` blocks drop any existing projection and correctly return no rows on a first run. The `b` blocks build the projection and return a row you want to read, so do not paste an `a` and a `b` together.
 
 **This is the one concept people get wrong, so read it twice.** The Graph Data Science library does not run on your database. It runs on an **in-memory projection**, which is a snapshot you build for one specific question.
 
@@ -506,7 +514,7 @@ Run block **4.12**, then **4.13**. In the Graph tab, size the nodes by `betweenn
 
 A common claim about betweenness is that removing the top broker fragments the network. Let us test it rather than believe it.
 
-Run blocks **5.1** through **5.4**.
+Run blocks **5.1**, **5.2a**, **5.2b**, **5.3** and **5.4**, each on its own.
 
 **The technique is worth noting**: tag everyone except the target with a temporary label, project on that label, rerun the algorithm. Simple, reversible, and nothing is deleted.
 
@@ -586,6 +594,7 @@ The whole point of the day is the translation. Here is the starting grid.
 | `There is no procedure with the name gds.closeness` | Your build has it as `gds.beta.closeness`. Try that, or skip it. Nothing later depends on it. |
 | "No changes, no records" after a relationship load | The `MATCH` found no node with that name. Run block 1.4 first: if statuses are null, the node load went wrong and everything downstream will fail silently. |
 | Counts come back as zero, or a query returns nothing after a clean load | You are on the wrong database. Check the selector at the top of the query window reads `crimenetdb`, not `neo4j`. |
+| "No changes" where you expected a table of numbers | Two statements went into one editor cell. Split them and rerun the one you wanted to see, or confirm the result with `CALL gds.graph.list()`. |
 | A graph projection already exists | `CALL gds.graph.drop('name', false);` The `false` means do not error if it is missing. |
 | You ran a load twice | The constraints blocked duplicate nodes and every relationship load uses `MERGE`, so you are safe. If in doubt, run block 0.1 and start again. The full load takes under a minute. |
 | Syntax error on a quote mark | You copied code out of a PDF or Word document, which converts straight quotes to curly ones. Copy from `lab-queries.cypher` instead. |
