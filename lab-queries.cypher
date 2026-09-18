@@ -497,6 +497,79 @@ ORDER BY similarity DESC;
 // PART 7 - CLEANUP
 // ----------------------------------------------------------------------------
 
+// 7.1 Drop every remaining in-memory projection.
+//     This removes the PROJECTIONS ONLY. Your nodes, relationships and the
+//     properties written in 4.5 all remain in the database. Part 8 proves it.
 CALL gds.graph.list() YIELD graphName
 CALL gds.graph.drop(graphName) YIELD graphName AS dropped
 RETURN dropped;
+
+// 7.2 Confirm nothing is projected.
+CALL gds.graph.list()
+YIELD graphName, nodeCount
+RETURN graphName, nodeCount;
+
+// 7.3 And confirm the scores survived. This is the point of using .write
+//     rather than .stream back in block 4.5.
+MATCH (p:Person)
+WHERE p.betweenness IS NOT NULL
+RETURN count(p) AS PeopleWithScores,
+       round(max(p.betweenness), 1) AS HighestBetweenness;
+
+
+// ----------------------------------------------------------------------------
+// PART 8 - DASHBOARD CARDS
+// ----------------------------------------------------------------------------
+// Studio > Dashboards > Create > Add a card. Paste a query into the Query
+// tab, choose the visualisation type from the dropdown, click Preview, Save.
+// None of these need a GDS projection: they read the properties written in
+// block 4.5, which is why they still work after the cleanup.
+// ----------------------------------------------------------------------------
+
+// 8.1 SINGLE VALUE - people in the network
+MATCH (p:Person)
+RETURN count(p) AS People;
+
+// 8.2 SINGLE VALUE - total moved through the accounts
+MATCH (:Account)-[t:TRANSFERRED_TO]->(:Account)
+RETURN sum(t.amount) AS TotalTransferred;
+
+// 8.3 BAR CHART - brokerage ranking. The headline of the whole lab.
+MATCH (p:Person)
+WHERE p.betweenness > 0
+RETURN p.name AS Person, round(p.betweenness, 1) AS Betweenness
+ORDER BY p.betweenness DESC;
+
+// 8.4 PIE CHART - status mix. Then rebuild the same query as a BAR CHART
+//     and compare how easily you can read each one.
+MATCH (p:Person)
+RETURN p.status AS Status, count(*) AS People
+ORDER BY People DESC;
+
+// 8.5 BAR CHART - community sizes
+MATCH (p:Person)
+WHERE p.community IS NOT NULL
+RETURN 'Cell ' + toString(p.community) AS Cell, count(*) AS Members
+ORDER BY Members DESC;
+
+// 8.6 TABLE - every metric in one place
+MATCH (p:Person)
+RETURN p.name   AS Person,
+       p.status AS Status,
+       p.role   AS Role,
+       toInteger(p.degree)     AS Degree,
+       round(p.betweenness, 1) AS Betweenness,
+       round(p.pagerank, 3)    AS PageRank,
+       p.community             AS Cell
+ORDER BY p.betweenness DESC;
+
+// 8.7 GRAPH - the social network
+MATCH (p:Person)-[r:KNOWS|CALLED|COMMANDS]-(other:Person)
+RETURN p, r, other;
+
+// 8.8 GRAPH - the laundering chains
+MATCH path = (:Person {status: 'KNOWN_OFFENDER'})
+             -[:CONTROLS]->(:Account)
+             -[:TRANSFERRED_TO*1..5]->(:Account)
+             -[:OWNED_BY]->(:Person)
+RETURN path;
