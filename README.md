@@ -459,22 +459,43 @@ Run the six statements in block **4.5**, one at a time, then block **4.6**.
 
 Four of these six you met yesterday: degree, closeness, betweenness and eigenvector. Two are new: **PageRank**, which is eigenvector's practical cousin and always converges, and **Louvain**, which finds communities.
 
+### The three parameters in those calls
+
+**`maxIterations: 50`.** Eigenvector and PageRank are iterative. Every node starts with an equal score, then each round every node passes its score along its relationships and receives score from its neighbours. Repeat until the numbers stop moving. **`maxIterations` is a safety cap on the number of rounds, not a target.** They normally settle long before it and stop early. The cap exists for graphs where the numbers never settle, so the algorithm does not run forever.
+
+**`dampingFactor: 0.85`.** Read it as a sentence: **85 percent of the time follow a relationship, 15 percent of the time jump to a random node instead.** The jump is the whole trick. Without it, score drains into dead ends and disconnected corners and pools there, and the calculation never settles. **This is precisely why PageRank always converges where eigenvector centrality sometimes will not**, and it is the reason to reach for PageRank on any real graph. 0.85 is the value Brin and Page used in the original Google paper and almost nobody changes it. Lower flattens every score towards uniform; higher leans harder on the link structure and converges more slowly.
+
+**`modularity`, which is an output rather than an input.** It scores the quality of the split Louvain found: **how many relationships fall inside communities, compared with how many you would expect if the same people had the same number of connections but were wired up at random.** It runs from about -0.5 to 1. Around 0 means the grouping is no better than chance. Above roughly 0.3 suggests there is real structure. Louvain does not merely report it, **it optimises it**: the algorithm repeatedly merges whichever nodes raise modularity most, so modularity is its objective function.
+
+> **The caveat matters as much as the number.** Modularity measures **separation, not correctness**, exactly like the silhouette score you met in clustering. A graph of pure noise can return a respectable modularity, because the algorithm will always find the best available split even when no real split exists. It tells you how cleanly it divided the network. It cannot tell you the divisions mean anything.
+
 > **Before you look at the results, predict.** Who do you think will have the highest betweenness centrality? Write down a name.
 
-> **What you should see.** The table ordered by betweenness, with roughly these at the top and bottom:
+> **What you should see.** The table ordered by betweenness, with these at the top. Values are from an actual run on this projection.
 >
-> | Person | Status | Role | Degree | Betweenness |
-> |---|---|---|---|---|
-> | Sarah Kim | ASSOCIATE | Cell Leader | 20 | ~16.8 |
-> | Tommy Barnes | ASSOCIATE | Lieutenant | 17 | ~9.3 |
-> | Elena Popov | ASSOCIATE | Operative | 3 | ~5.7 |
-> | ... | | | | |
-> | **John Doe** | **KNOWN_OFFENDER** | **Boss** | 15 | **~3.1** |
-> | **Carlos Mendez** | **KNOWN_OFFENDER** | **Boss** | 5 | **~2.1** |
+> | Person | Status | Role | Degree | Betweenness | PageRank | Cell |
+> |---|---|---|---|---|---|---|
+> | Sarah Kim | ASSOCIATE | Cell Leader | 20 | 18.8 | 2.219 | 4 |
+> | Tommy Barnes | ASSOCIATE | Lieutenant | 17 | 9.3 | 1.767 | 3 |
+> | Elena Popov | ASSOCIATE | Operative | 3 | 5.9 | 0.531 | 11 |
+> | **John Doe** | **KNOWN_OFFENDER** | **Boss** | 15 | **5.2** | 1.597 | 4 |
+> | Anna Petrov | CLEAN | Street Level | 4 | 4.7 | 0.661 | 11 |
+> | David Wong | ASSOCIATE | Cell Leader | 4 | 4.6 | 0.707 | 11 |
+> | Robert Clark | CLEAN | Street Level | 3 | 3.3 | 0.643 | 11 |
+> | Lisa Johnson | CLEAN | Operative | 14 | 3.2 | 1.434 | 3 |
+> | **Carlos Mendez** | **KNOWN_OFFENDER** | **Boss** | 5 | **1.2** | 0.66 | 4 |
+> | Nina Davis | CLEAN | Street Level | 2 | 1.2 | 0.481 | 11 |
 >
-> Exact values vary slightly by GDS version. The ranking is what matters.
+> Community IDs are arbitrary labels, so your numbers may differ from 3, 4 and 11. The groupings will not.
 
-**Stop and look at the bottom two rows.** The two bosses have almost the lowest betweenness in the network. The highest belongs to an associate. **Position beats role**, and that is the finding of the whole session. The person who holds a network together is rarely the person with the title.
+**Stop and read the Status column against the Betweenness column.**
+
+**The top three are all associates. Neither boss is in the top three.** Sarah Kim scores three and a half times John Doe and roughly fifteen times Carlos Mendez. **Position beats role**, and that is the finding of the whole session: the person who holds a network together is rarely the person with the title.
+
+Two more things worth a moment.
+
+- **Carlos Mendez is weak on every measure.** Degree 5, betweenness 1.2, eigenvector 0.144, PageRank 0.66. He runs an organisation and is peripheral to the network that organisation depends on.
+- **Lisa Johnson is the clearest degree trap in the table.** Degree 14, which is fourth highest, but betweenness 3.2. High traffic, almost no brokerage. She talks a lot to one person, which is volume rather than position. Hold that thought for the next block.
 
 ## 3.3: A trap in the degree column
 
@@ -484,7 +505,33 @@ Run block **4.7**.
 
 Why? The projection kept all eleven parallel `CALLED` relationships between him and Sarah Kim. So **degree here is measuring call volume, not connectivity.**
 
-Neither number is wrong. They answer different questions, and you have to know which one you asked. **What you put into the edge decides what the measure means.** If you want connectivity rather than volume, aggregate the calls before projecting.
+Neither number is wrong. They answer different questions, and you have to know which one you asked. **What you put into the edge decides what the measure means.**
+
+> **Go further: build the other version and compare them.** This is optional, takes three minutes, and it is the most useful thing in Part 3 if you have time for it.
+>
+> Run blocks **4.7b**, **4.7c** and **4.7d**, each on its own cell. The projection in 4.7b adds one setting:
+>
+> ```cypher
+> KNOWS:    {orientation: 'UNDIRECTED', aggregation: 'SINGLE'},
+> CALLED:   {orientation: 'UNDIRECTED', aggregation: 'SINGLE'},
+> COMMANDS: {orientation: 'UNDIRECTED', aggregation: 'SINGLE'}
+> ```
+>
+> **`aggregation: 'SINGLE'` keeps one relationship per pair.** Eleven calls collapse to one connection, so degree becomes connectivity rather than volume.
+>
+> **What you should see.** The projection drops from **92 relationships to 42**, because there are only 21 distinct pairs among fifteen people. Then 4.7c puts the two betweenness figures side by side:
+>
+> | Person | Degree with volume | Betweenness with volume | Betweenness deduplicated |
+> |---|---|---|---|
+> | Sarah Kim | 20 | 18.8 | 16.8 |
+> | Tommy Barnes | 17 | 9.3 | 9.3 |
+> | John Doe | 15 | 5.2 | **3.1** |
+> | Lisa Johnson | 14 | 3.2 | 2.4 |
+> | Carlos Mendez | 5 | 1.2 | **2.1** |
+>
+> **Read the last two rows.** John Doe's betweenness nearly halves and Carlos Mendez's rises, so **the two bosses swap places.** Deduplicated, John Doe's apparent brokerage turns out to be his call volume with one person rather than his position. Sarah Kim stays top either way.
+>
+> **This is the decision, stated plainly.** Volume answers "who is busy with whom". Connectivity answers "who connects to whom". If you were choosing a surveillance target, or a module to test first, or a transformation stage to harden, those two questions can hand you different names. **Choose deliberately, and say which you chose.**
 
 ## 3.4: The hidden broker
 
@@ -500,14 +547,19 @@ Her status is `ASSOCIATE`. She is not a known offender and not a boss. She is th
 
 Run blocks **4.9**, **4.10** and **4.11**.
 
-> **What you should see** from Louvain: three real cells plus three singletons.
+> **What you should see.** **Six communities.** Three are single people: **James Chen, Rachel Patterson and Kevin Garcia**. The other twelve fall into three cells:
 >
-> - Carlos Mendez, Maria Vasquez, **Sarah Kim**
-> - John Doe, Tommy Barnes, Elena Popov, Mike Roberts, Nina Davis
-> - Anna Petrov, David Wong, Lisa Johnson, Robert Clark
-> - James Chen, Rachel Patterson and Kevin Garcia, each alone
+> - **Sarah Kim, John Doe, Carlos Mendez, Maria Vasquez** - both bosses and the broker between them
+> - **Tommy Barnes, Lisa Johnson, Mike Roberts**
+> - **Elena Popov, Anna Petrov, David Wong, Robert Clark, Nina Davis** - the periphery
+>
+> Community IDs are arbitrary, so the numbers you see will differ. Modularity around 0.38.
 
-**Notice where Sarah Kim was placed.** She is assigned to Carlos's cell, and her most frequent contact by a wide margin is John Doe in the other cell. **That is what a bridge looks like in community terms:** assigned to one group, functioning across two.
+**Look at the first cell, because it is not what an org chart would give you.** Louvain has put **both bosses in the same community**, along with Sarah Kim. They command separate organisations. What binds them in this projection is the weight of call traffic running through her.
+
+**And this is where the parallel edges from block 4.7 return.** Count the eleven calls as eleven, which is what the projection does, and John Doe is pulled across into Carlos Mendez's cell. Deduplicate them to one connection and he groups with Tommy Barnes instead, and modularity drops to about 0.24. **Neither answer is wrong.** One groups people by who they are connected to, the other by how much flows between them. **What you put into the edge decides what the algorithm finds**, and here that decision changes the membership of groups somebody would act on.
+
+**Whatever split you get, notice where Sarah Kim sits.** She is in Carlos's cell, and her heaviest contact by a wide margin is John Doe. **That is what a bridge looks like in community terms:** assigned to one group, functioning across two.
 
 Then the components, and block 4.11.
 

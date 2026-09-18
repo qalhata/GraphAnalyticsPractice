@@ -339,6 +339,42 @@ RETURN p.name AS Person,
        round(p.betweenness, 1) AS Betweenness
 ORDER BY DegreeWithParallelEdges DESC;
 
+// 4.7b OPTIONAL: the same network with the parallel calls collapsed.
+//      'aggregation: SINGLE' keeps one relationship per pair, so degree
+//      becomes connectivity instead of volume. Run each statement on its own.
+CALL gds.graph.drop('people-deduped', false)
+YIELD graphName, nodeCount, relationshipCount
+RETURN graphName, nodeCount, relationshipCount;
+
+CALL gds.graph.project(
+  'people-deduped',
+  'Person',
+  {
+    KNOWS:    {orientation: 'UNDIRECTED', aggregation: 'SINGLE'},
+    CALLED:   {orientation: 'UNDIRECTED', aggregation: 'SINGLE'},
+    COMMANDS: {orientation: 'UNDIRECTED', aggregation: 'SINGLE'}
+  }
+)
+YIELD graphName, nodeCount, relationshipCount
+RETURN graphName, nodeCount, relationshipCount;
+
+// 4.7c Compare the two projections side by side. Betweenness from the
+//      deduplicated graph against the values already written by block 4.5.
+CALL gds.betweenness.stream('people-deduped')
+YIELD nodeId, score
+WITH gds.util.asNode(nodeId) AS p, score
+RETURN p.name   AS Person,
+       p.status AS Status,
+       toInteger(p.degree)     AS DegreeWithVolume,
+       round(p.betweenness, 1) AS BetweennessWithVolume,
+       round(score, 1)         AS BetweennessDeduplicated
+ORDER BY BetweennessWithVolume DESC;
+
+// 4.7d Tidy up the optional projection.
+CALL gds.graph.drop('people-deduped')
+YIELD graphName
+RETURN graphName AS dropped;
+
 // 4.8 The hidden broker. High betweenness, not flagged as an offender.
 MATCH (p:Person)
 WHERE p.betweenness > 0 AND p.status <> 'KNOWN_OFFENDER'
