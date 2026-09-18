@@ -423,7 +423,20 @@ If it said `NodeByLabelScan` it would be reading all fifteen Person nodes to fin
 
 Run blocks **4.1**, **4.2a**, **4.2b**, **4.3a**, **4.3b** and **4.4**, each on its own.
 
-The `a` blocks drop any existing projection and correctly return no rows on a first run. The `b` blocks build the projection and return a row you want to read, so do not paste an `a` and a `b` together.
+The `a` blocks drop any existing projection. **Both of their possible outputs are correct**, and the second one surprises people:
+
+- **No rows**, if there was no projection to remove. The `false` argument means do not error when it is absent.
+- **One row describing the projection it just removed**, including its `nodeCount` and `relationshipCount`. That is `gds.graph.drop` reporting what it deleted. It is a success, not a failure.
+
+So if you rerun an `a` block after having built the projection, you will get a full table back. Rerun the matching `b` block afterwards to rebuild it.
+
+**Notice the `YIELD` on the drop blocks, because it is doing real work.** A procedure can return many columns, and `YIELD` selects the ones you want. Without it, `gds.graph.drop` hands back everything it has, including a `schema` column that has been deprecated, and Neo4j shows a yellow `01N00: Feature deprecated` notification underneath the result.
+
+**That notification is not an error.** The statement ran and the graph was dropped. But asking only for the columns you need is the better habit, it makes the output readable, and it removes the notification. Same reasoning as not writing `SELECT *`.
+
+> **If you do see a yellow notification anywhere in this lab**, read it rather than
+> stopping. Neo4j shows notifications alongside successful results, and a deprecated
+> feature still works.
 
 **This is the one concept people get wrong, so read it twice.** The Graph Data Science library does not run on your database. It runs on an **in-memory projection**, which is a snapshot you build for one specific question.
 
@@ -595,6 +608,8 @@ The whole point of the day is the translation. Here is the starting grid.
 | "No changes, no records" after a relationship load | The `MATCH` found no node with that name. Run block 1.4 first: if statuses are null, the node load went wrong and everything downstream will fail silently. |
 | Counts come back as zero, or a query returns nothing after a clean load | You are on the wrong database. Check the selector at the top of the query window reads `crimenetdb`, not `neo4j`. |
 | "No changes" where you expected a table of numbers | Two statements went into one editor cell. Split them and rerun the one you wanted to see, or confirm the result with `CALL gds.graph.list()`. |
+| A drop returns a full table of graph details | That is the success output: `gds.graph.drop` reports what it removed. Rerun the matching `b` block to rebuild the projection. |
+| A yellow "Feature deprecated" notification | Not an error; the statement ran. On `gds.graph.drop` it means the `schema` output column is retired, which the `YIELD` in these blocks avoids. |
 | A graph projection already exists | `CALL gds.graph.drop('name', false);` The `false` means do not error if it is missing. |
 | You ran a load twice | The constraints blocked duplicate nodes and every relationship load uses `MERGE`, so you are safe. If in doubt, run block 0.1 and start again. The full load takes under a minute. |
 | Syntax error on a quote mark | You copied code out of a PDF or Word document, which converts straight quotes to curly ones. Copy from `lab-queries.cypher` instead. |

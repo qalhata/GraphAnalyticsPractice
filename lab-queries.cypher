@@ -244,10 +244,17 @@ RETURN p;
 // 4.1 Confirm the plugin. Expect 2.x or higher.
 RETURN gds.version() AS GDSVersion;
 
-// 4.2a Drop any existing 'people' projection. On a first run this returns
-//      no rows, which is correct: 'false' means do not error if it is absent.
-//      RUN THIS ON ITS OWN, not pasted together with 4.2b.
-CALL gds.graph.drop('people', false);
+// 4.2a Drop any existing 'people' projection. RUN THIS ON ITS OWN.
+//      Two possible outcomes, both correct:
+//        - No rows, if no projection existed. The 'false' means do not error.
+//        - One row naming the projection it just removed, with its counts.
+//          That is a success, not a failure.
+//      The YIELD keeps the output to three useful columns. Without it, drop
+//      returns everything it has, including a 'schema' column that is
+//      deprecated, which triggers a harmless 01N00 notification.
+CALL gds.graph.drop('people', false)
+YIELD graphName, nodeCount, relationshipCount
+RETURN graphName, nodeCount, relationshipCount;
 
 // 4.2b Project the social network. Person nodes only, three relationship
 //      types, all undirected. Expect graphName 'people', 15 nodes and
@@ -265,7 +272,9 @@ YIELD graphName, nodeCount, relationshipCount
 RETURN graphName, nodeCount, relationshipCount;
 
 // 4.3a Drop any existing 'money' projection. Run on its own.
-CALL gds.graph.drop('money', false);
+CALL gds.graph.drop('money', false)
+YIELD graphName, nodeCount, relationshipCount
+RETURN graphName, nodeCount, relationshipCount;
 
 // 4.3b Project the money network separately. Different question, different
 //      graph. Expect graphName 'money' with Persons and Accounts included.
@@ -387,7 +396,9 @@ WHERE p.name <> 'Sarah Kim'
 SET p:Remaining;
 
 // 5.2a Drop any existing 'disrupted' projection. Run on its own.
-CALL gds.graph.drop('disrupted', false);
+CALL gds.graph.drop('disrupted', false)
+YIELD graphName, nodeCount, relationshipCount
+RETURN graphName, nodeCount, relationshipCount;
 
 // 5.2b Project the reduced network.
 CALL gds.graph.project(
@@ -420,7 +431,10 @@ LIMIT 5;
 
 // 5.5 Tidy up the temporary label and the projection.
 MATCH (p:Remaining) REMOVE p:Remaining;
-CALL gds.graph.drop('disrupted');
+
+CALL gds.graph.drop('disrupted')
+YIELD graphName
+RETURN graphName AS dropped;
 
 
 // ----------------------------------------------------------------------------
