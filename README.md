@@ -18,7 +18,11 @@ By the end of ninety minutes you will have:
 
 **You do not need to have used Neo4j before.** Everything you need is in this document. If you are already comfortable with graphs, the "Go further" boxes will keep you occupied.
 
-**A note on the dataset.** It is a synthetic criminal network: fifteen people, twelve bank accounts, phone records, transfers and an organisational hierarchy. It is not from your domain, and you will notice that. I have kept it because the patterns in it are genuinely well constructed, and because the algorithms do not care about the domain. Betweenness centrality on a criminal network and betweenness centrality on a data lineage graph are the same computation. The final section of the lab asks you to think hard about the difference between the two.
+**A note on the dataset.** It is a synthetic criminal network: fifteen people, twelve bank accounts, phone records, transfers and an organisational hierarchy. It is not from your domain, and you will notice that.
+
+The key learning here is building a mental model of well constructed patterns in network analysis, and recognising that the algorithms do not care about the domain. Betweenness centrality on a criminal network and betweenness centrality on a data lineage graph are the same computation. **Your subject matter expertise is what determines your abstraction from the concepts**, which is why the translation back to your own work sits at the end of this guide rather than being done for you.
+
+The final section of the lab asks you to think hard about where that abstraction should stop.
 
 ---
 
@@ -30,18 +34,33 @@ By the end of ninety minutes you will have:
 - The eight CSV files, either downloaded or loaded from a URL (both routes below)
 - **`lab-queries.cypher`**, which is the plain text file you will copy queries from
 
-> **Copy your Cypher from `lab-queries.cypher`, not from this PDF or Word document.**
-> Word converts straight quotes into curly quotes and Neo4j rejects them with a syntax
-> error. This document is for reading and following along.
+> **Copy your Cypher from `lab-queries.cypher`.** Open it in the repository and use the
+> **Raw** view or the copy button, or open the downloaded file in a text editor. This
+> guide tells you which block to run; the file is where the code lives.
+>
+> **If you are reading a PDF or Word copy of this guide, do not copy code out of it.**
+> Those formats convert straight quotes into curly quotes, which Neo4j rejects with a
+> syntax error. Reading from them is fine. Copying from them is not.
 
 ## Step 1: Create the instance
 
 1. Open Neo4j Desktop and click **Create Instance**.
-2. Name it `legAnalytics`, choose the latest **5.x** or **25.x** version, and set a password you will remember. `training123` is fine for a lab.
+2. Name it `legAnalytics`, choose the Neo4j version your instructor specifies, and set a password you will remember. `training123` is fine for a lab. **Everyone should use the same version**, because the Graph Data Science library is matched to one Neo4j release at a time and a mismatch means a procedure works on one machine and not another.
 3. Start the instance with the **play** button.
 4. **Install the plugin now, before you do anything else.** Click the **three dots** next to the instance name, open the plugins panel, find **Graph Data Science Library**, install it, and **restart the instance**. If you skip this, everything up to Part 4 works and then nothing does.
 5. Click **Create database**, name it `CrimeNetDB`, then **Connect**.
 6. At the top of the query window, switch the database from `neo4j` to `crimenetdb`.
+
+### Users and databases: why you stay as `neo4j`
+
+**The `neo4j` user belongs to the instance, not to a database.** Creating `CrimeNetDB` does not create a new user and does not need one: `neo4j` is the administrator for the whole instance and can query every database inside it.
+
+The confusion to avoid is that **there is also a database called `neo4j`**, created by default alongside yours. Same name, unrelated thing. Switching the selector at the top of the query window changes which **database** your queries run against. Your **user** does not change, and does not need to.
+
+Two practical notes:
+
+- **Neo4j stores database names in lower case**, so `CrimeNetDB` becomes `crimenetdb`. That is expected, not a mistake.
+- **Confirm the selector reads `crimenetdb` before you load anything.** If it still says `neo4j`, everything loads into the default database instead, and later queries return nothing for no apparent reason. The editor prompt shows it too, as `crimenetdb$`.
 
 ## Step 2: Confirm the plugin
 
@@ -157,13 +176,21 @@ Run block **1.4**.
 
 Run block **1.5**.
 
-> **What you should see.** Three people with no date of birth and no address: **Elena Popov, Robert Clark and Nina Davis.**
+> **What you should see.** Three people with no date of birth, and a null in the Address column: **Elena Popov, Robert Clark and Nina Davis.**
 
 **Look at their roles.** One associate and two street-level people. The records with the least information are the ones furthest from the centre of the network. **The missingness is telling you something about position.** An absent value is often a fact rather than a gap, and deciding which it is comes before deciding how to handle it.
 
-> **Aside worth thirty seconds.** Look at the addresses: Shady Lane, Laundered Boulevard, Clean Money Road. Synthetic data always encodes the assumptions of whoever generated it, and here the label has been written straight into the address field. Useful reminder when you are tempted to train something on generated data.
+## 1.8: The addresses, which are a warning about synthetic data
 
-## 1.8: Load the relationships
+Run block **1.6**, which lists the people whose records are complete, and read the Address column.
+
+> **What you should see.** Shady Lane. Dark Street. Suspect Avenue. Loyal Street. Trust Road. Innocent Lane. Clean Avenue. Mule Street. Clean Money Road. Laundered Boulevard.
+
+**Whoever generated this data wrote the answer into the address field.** A model trained on it could reach high accuracy by reading the street name and nothing else, and it would look like a triumph.
+
+Synthetic data always encodes the assumptions of whoever generated it. Usually those assumptions are subtle and you have to go looking for them. Here they are written in capital letters, which makes this a useful thing to have seen before the first time someone offers you a generated dataset to train on.
+
+## 1.9: Load the relationships
 
 Run blocks **2.1** through **2.6**, one at a time.
 
@@ -362,7 +389,7 @@ Run block **3.6**. Read it before you run it.
 
 **Nothing here is illegal on its own.** Each transfer is an ordinary payment under the threshold, made between accounts that exist for legitimate reasons. **The crime is the shape, and the shape exists only in the relationships.** No rule applied to rows of the transactions table finds this, however clever the rule is, because no row is suspicious.
 
-That is the strongest argument for graph thinking you will see today. Where else does a pattern live in the connections rather than in the values? Circular trading in market surveillance. Split invoicing in procurement fraud. Cyclical dependencies in data lineage. Repeated referral loops in a care pathway.
+That is the strongest argument for graph thinking in this lab, and it is the abstraction worth carrying. Ask yourself where else a pattern lives in the connections rather than in the values. Circular trading in market surveillance. Split invoicing in procurement fraud. Cyclical dependencies in data lineage. Repeated referral loops in a care pathway.
 
 ### Why there is no SQL version here
 
@@ -380,7 +407,7 @@ Run block **3.8**.
 
 > **What you should see.** `NodeIndexSeek` in the execution plan.
 
-If it said `NodeByLabelScan` it would be reading all fifteen Person nodes to find one. On fifteen nodes nobody cares. On fifteen million that is the difference between two milliseconds and two minutes. Same lesson as any database, and the reason you created the indexes first.
+If it said `NodeByLabelScan` it would be reading all fifteen Person nodes to find one. On fifteen nodes it makes no difference. On fifteen million that is the difference between two milliseconds and two minutes. Same lesson as any database, and the reason you created the indexes first.
 
 ---
 
@@ -558,9 +585,10 @@ The whole point of the day is the translation. Here is the starting grid.
 | `Unknown function 'gds.version'` | The plugin is not installed, or the instance was not restarted after installing it. |
 | `There is no procedure with the name gds.closeness` | Your build has it as `gds.beta.closeness`. Try that, or skip it. Nothing later depends on it. |
 | "No changes, no records" after a relationship load | The `MATCH` found no node with that name. Run block 1.4 first: if statuses are null, the node load went wrong and everything downstream will fail silently. |
+| Counts come back as zero, or a query returns nothing after a clean load | You are on the wrong database. Check the selector at the top of the query window reads `crimenetdb`, not `neo4j`. |
 | A graph projection already exists | `CALL gds.graph.drop('name', false);` The `false` means do not error if it is missing. |
 | You ran a load twice | The constraints blocked duplicate nodes and every relationship load uses `MERGE`, so you are safe. If in doubt, run block 0.1 and start again. The full load takes under a minute. |
-| Syntax error on a quote mark | You copied from the PDF or Word version. Copy from `lab-queries.cypher`. |
+| Syntax error on a quote mark | You copied code out of a PDF or Word document, which converts straight quotes to curly ones. Copy from `lab-queries.cypher` instead. |
 
 ---
 

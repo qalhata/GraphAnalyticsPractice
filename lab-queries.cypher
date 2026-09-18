@@ -80,10 +80,21 @@ MATCH (p:Person)
 RETURN p.status AS Status, count(*) AS People
 ORDER BY People DESC, Status;
 
-// 1.5 Who has incomplete records? Expect 3 people with no DOB or address.
+// 1.5 Who has incomplete records? Expect 3 people, with Address showing null.
 MATCH (p:Person)
 WHERE p.dateOfBirth IS NULL
-RETURN p.name AS Person, p.status AS Status, p.role AS Role;
+RETURN p.name             AS Person,
+       p.status           AS Status,
+       p.role             AS Role,
+       p.lastKnownAddress AS Address;
+
+// 1.6 And the records that ARE complete. Read the Address column.
+MATCH (p:Person)
+WHERE p.lastKnownAddress IS NOT NULL
+RETURN p.name             AS Person,
+       p.status           AS Status,
+       p.lastKnownAddress AS Address
+ORDER BY p.status, p.name;
 
 
 // ----------------------------------------------------------------------------
